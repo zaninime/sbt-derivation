@@ -40,8 +40,6 @@ let
       outputHashAlgo = "sha256";
       outputHashMode = "recursive";
 
-      dontFixup = true;
-
       impureEnvVars = lib.fetchers.proxyImpureEnvVars
         ++ [ "GIT_PROXY_COMMAND" "SOCKS_SERVER" ];
 
@@ -49,9 +47,6 @@ let
         runHook preBuild
 
         sbt compile
-
-        find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
-        find ${depsDir} -name '*.lock' -delete
 
         runHook postBuild
       '';
@@ -63,8 +58,21 @@ let
 
         cp -ar "$SBT_IVY_HOME" $out
         cp -ar "$COURSIER_CACHE" $out
+        cp -ar "$SBT_BOOT_DIRECTORY" $out
 
         runHook postInstall
+      '';
+
+      fixupPhase = args.depsFixupPhase or ''
+        runHook preFixup
+
+        find $out -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
+        find $out -name '*.lock' -delete
+        find $out -name '*.log' -delete
+
+        find $out -name 'org.scala-sbt-compiler-bridge_*' -type d -print0 | xargs -0 rm -rf
+
+        runHook postFixup
       '';
     });
   in stdenv.mkDerivation (depsAttrs // overrideDepsAttrs depsAttrs);
