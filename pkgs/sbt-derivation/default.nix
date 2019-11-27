@@ -58,7 +58,6 @@ let
 
         cp -ar "$SBT_IVY_HOME" $out
         cp -ar "$COURSIER_CACHE" $out
-        cp -ar "$SBT_BOOT_DIRECTORY" $out
 
         runHook postInstall
       '';
@@ -70,8 +69,6 @@ let
         find $out -name '*.lock' -delete
         find $out -name '*.log' -delete
 
-        find $out -name 'org.scala-sbt-compiler-bridge_*' -type d -print0 | xargs -0 rm -rf
-
         runHook postFixup
       '';
     });
@@ -80,7 +77,9 @@ in stdenv.mkDerivation (sbtEnv // args // {
   inherit deps;
   nativeBuildInputs = [ customSbt ] ++ (stripOutSbt nativeBuildInputs);
 
-  preBuild = (args.preBuild or "") + ''
+  postConfigure = (args.postConfigure or "") + ''
+    echo copying dependencies
+
     cp -r $deps ${depsDir}
     chmod -R +rwX ${depsDir}
   '';
