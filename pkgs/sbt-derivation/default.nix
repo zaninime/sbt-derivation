@@ -30,7 +30,7 @@ let
 
   deps = let
     depsAttrs = (sbtEnv // {
-      name = "${name}-deps";
+      name = "${name}-deps.tar.gz";
       inherit src patches;
 
       nativeBuildInputs = [ customSbt gnused ]
@@ -38,7 +38,7 @@ let
 
       outputHash = depsSha256;
       outputHashAlgo = "sha256";
-      outputHashMode = "recursive";
+      outputHashMode = "flat";
 
       impureEnvVars = lib.fetchers.proxyImpureEnvVars
         ++ [ "GIT_PROXY_COMMAND" "SOCKS_SERVER" ];
@@ -48,28 +48,21 @@ let
 
         sbt compile
 
+        find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
+        find ${depsDir} -name '*.lock' -delete
+        find ${depsDir} -name '*.log' -delete
+
         runHook postBuild
       '';
 
       installPhase = args.depsInstallPhase or ''
         runHook preInstall
 
-        mkdir -p $out
-
-        cp -ar "$SBT_IVY_HOME" $out
-        cp -ar "$COURSIER_CACHE" $out
+        tar --owner=0 --group=0 --numeric-owner --format=gnu \
+          --sort=name --mtime="@$SOURCE_DATE_EPOCH" \
+          -czf $out ${depsDir}
 
         runHook postInstall
-      '';
-
-      fixupPhase = args.depsFixupPhase or ''
-        runHook preFixup
-
-        find $out -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
-        find $out -name '*.lock' -delete
-        find $out -name '*.log' -delete
-
-        runHook postFixup
       '';
     });
   in stdenv.mkDerivation (depsAttrs // overrideDepsAttrs depsAttrs);
@@ -78,9 +71,9 @@ in stdenv.mkDerivation (sbtEnv // args // {
   nativeBuildInputs = [ customSbt ] ++ (stripOutSbt nativeBuildInputs);
 
   postConfigure = (args.postConfigure or "") + ''
-    echo copying dependencies
+    echo extracting dependencies
 
-    cp -r $deps ${depsDir}
+    tar xf $deps
     chmod -R +rwX ${depsDir}
   '';
 })
