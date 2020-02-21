@@ -51,6 +51,7 @@ let
         find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
         find ${depsDir} -name '*.lock' -delete
         find ${depsDir} -name '*.log' -delete
+        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 rm -rf
 
         runHook postBuild
       '';
