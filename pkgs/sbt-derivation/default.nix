@@ -46,12 +46,16 @@ let
       buildPhase = args.depsBuildPhase or ''
         runHook preBuild
 
+        echo "running \"sbt compile\" to warm up the caches"
         sbt compile
 
+        echo "stripping out comments containing dates"
         find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
-        find ${depsDir} -name '*.lock' -delete
-        find ${depsDir} -name '*.log' -delete
-        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 rm -rf
+
+        echo "removing non-reproducible accessory files"
+        find ${depsDir} -name '*.lock' -type f -print0 | xargs -0 rm -rfv
+        find ${depsDir} -name '*.log' -type f -print0 | xargs -0 rm -rfv
+        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -print0 | xargs -0 rm -rfv
 
         runHook postBuild
       '';
