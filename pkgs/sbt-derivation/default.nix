@@ -9,6 +9,10 @@
 # depsSha256 is the sha256 of the dependencies
 , depsSha256
 
+# keepCompilerBridge doesn't delete the messy zip files of compiler bridges but
+# tries to fix them up
+, keepCompilerBridge ? true
+
 , ... }@args':
 
 with builtins;
@@ -16,7 +20,10 @@ with lib;
 
 let
   customSbt = callPackage ../custom-sbt { inherit sbt; };
-  args = removeAttrs args' [ "overrideDepsAttrs" "depsSha256" ];
+  jarnitor = import ../jarnitor { };
+
+  args =
+    removeAttrs args' [ "overrideDepsAttrs" "depsSha256" "keepCompilerBridge" ];
   stripOutSbt = filter (x: x != sbt);
 
   depsDir = ".nix";
@@ -55,7 +62,14 @@ let
         echo "removing non-reproducible accessory files"
         find ${depsDir} -name '*.lock' -type f -print0 | xargs -0 rm -rfv
         find ${depsDir} -name '*.log' -type f -print0 | xargs -0 rm -rfv
-        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -print0 | xargs -0 rm -rfv
+
+        ${optionalString (!keepCompilerBridge) ''
+          find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -print0 | xargs -0 rm -rfv
+        ''}
+        ${optionalString keepCompilerBridge ''
+          echo "fixing-up the compiler bridge"
+          find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 ${jarnitor}/bin/jarnitor
+        ''}
 
         runHook postBuild
       '';
