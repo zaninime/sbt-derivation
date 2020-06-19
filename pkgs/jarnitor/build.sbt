@@ -1,6 +1,6 @@
 import Dependencies._
 
-ThisBuild / scalaVersion := "2.13.1"
+ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version := sys.env.getOrElse("version", "0.1.0-SNAPSHOT")
 ThisBuild / organization := "me.zanini"
 ThisBuild / organizationName := "zanini dot me"
