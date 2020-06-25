@@ -9,9 +9,13 @@
 # depsSha256 is the sha256 of the dependencies
 , depsSha256
 
-# keepCompilerBridge doesn't delete the messy zip files of compiler bridges but
-# tries to fix them up
+# setting keepCompilerBridge to true doesn't delete the messy zip files of
+# compiler bridges but tries to fix them up
 , keepCompilerBridge ? true
+
+  # whether to put the version in the dependencies' derivation too or not.
+  # every time the version is changed, the dependencies will be re-downloaded
+, versionInDepsName ? false
 
 , ... }@args':
 
@@ -37,7 +41,7 @@ let
 
   deps = let
     depsAttrs = (sbtEnv // {
-      name = "${name}-deps.tar.gz";
+      name = "${if versionInDepsName then name else args'.pname}-deps.tar.gz";
       inherit src patches;
 
       nativeBuildInputs = [ customSbt gnused ]
