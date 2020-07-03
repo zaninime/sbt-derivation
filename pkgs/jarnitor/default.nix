@@ -8,7 +8,7 @@ in sbt.mkDerivation rec {
 
   nativeBuildInputs = [ makeWrapper ];
 
-  depsSha256 = "1ss7lkz0baxjps97lw5cvbs9w2zajxymfmgbj7kvcz5rgqxv07nm";
+  depsSha256 = "1b8xmr2waq715v63p7ja66pji2hpkfm3yni6ki6bhydiy4yk7vkq";
   keepCompilerBridge = false;
 
   buildPhase = ''

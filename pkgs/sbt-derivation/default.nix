@@ -1,4 +1,4 @@
-{ lib, stdenv, callPackage, sbt, gnused }:
+{ lib, stdenv, callPackage, sbt, gnused, zstd }:
 
 { name ? "${args'.pname}-${args'.version}", src, nativeBuildInputs ? [ ]
 , passthru ? { }, patches ? [ ]
@@ -41,10 +41,10 @@ let
 
   deps = let
     depsAttrs = (sbtEnv // {
-      name = "${if versionInDepsName then name else args'.pname}-deps.tar.gz";
+      name = "${if versionInDepsName then name else args'.pname}-deps.tar.zst";
       inherit src patches;
 
-      nativeBuildInputs = [ customSbt gnused ]
+      nativeBuildInputs = [ customSbt gnused zstd ]
         ++ (stripOutSbt nativeBuildInputs);
 
       outputHash = depsSha256;
@@ -83,7 +83,7 @@ let
 
         tar --owner=0 --group=0 --numeric-owner --format=gnu \
           --sort=name --mtime="@$SOURCE_DATE_EPOCH" \
-          -czf $out ${depsDir}
+          -c ${depsDir} | zstd --fast=3 -o $out
 
         runHook postInstall
       '';
@@ -91,12 +91,12 @@ let
   in stdenv.mkDerivation (depsAttrs // overrideDepsAttrs depsAttrs);
 in stdenv.mkDerivation (sbtEnv // args // {
   inherit deps;
-  nativeBuildInputs = [ customSbt ] ++ (stripOutSbt nativeBuildInputs);
+  nativeBuildInputs = [ customSbt zstd ] ++ (stripOutSbt nativeBuildInputs);
 
   postConfigure = (args.postConfigure or "") + ''
     echo extracting dependencies
 
-    tar xf $deps
+    tar -I zstd -xf $deps
     chmod -R +rwX ${depsDir}
   '';
 })
