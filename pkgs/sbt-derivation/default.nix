@@ -1,4 +1,4 @@
-{ lib, stdenv, callPackage, sbt, gnused, zstd }:
+{ lib, stdenv, callPackage, sbt, gnused, zstd, strip-nondeterminism, file }:
 
 { name ? "${args'.pname}-${args'.version}", src, nativeBuildInputs ? [ ]
 , passthru ? { }, patches ? [ ]
@@ -9,12 +9,8 @@
 # depsSha256 is the sha256 of the dependencies
 , depsSha256
 
-# setting keepCompilerBridge to true doesn't delete the messy zip files of
-# compiler bridges but tries to fix them up
-, keepCompilerBridge ? true
-
-  # whether to put the version in the dependencies' derivation too or not.
-  # every time the version is changed, the dependencies will be re-downloaded
+# whether to put the version in the dependencies' derivation too or not.
+# every time the version is changed, the dependencies will be re-downloaded
 , versionInDepsName ? false
 
 , ... }@args':
@@ -24,7 +20,6 @@ with lib;
 
 let
   customSbt = callPackage ../custom-sbt { inherit sbt; };
-  jarnitor = import ../jarnitor { };
 
   args =
     removeAttrs args' [ "overrideDepsAttrs" "depsSha256" "keepCompilerBridge" ];
@@ -44,7 +39,7 @@ let
       name = "${if versionInDepsName then name else args'.pname}-deps.tar.zst";
       inherit src patches;
 
-      nativeBuildInputs = [ customSbt gnused zstd ]
+      nativeBuildInputs = [ customSbt gnused zstd strip-nondeterminism file ]
         ++ (stripOutSbt nativeBuildInputs);
 
       outputHash = depsSha256;
@@ -67,13 +62,14 @@ let
         find ${depsDir} -name '*.lock' -type f -print0 | xargs -0 rm -rfv
         find ${depsDir} -name '*.log' -type f -print0 | xargs -0 rm -rfv
 
-        ${optionalString (!keepCompilerBridge) ''
-          find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -print0 | xargs -0 rm -rfv
-        ''}
-        ${optionalString keepCompilerBridge ''
-          echo "fixing-up the compiler bridge"
-          find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 ${jarnitor}/bin/jarnitor
-        ''}
+        echo "fixing-up the compiler bridge"
+        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 strip-nondeterminism
+
+        echo "removing runtime jar"
+        find ${depsDir} -name rt.jar -delete
+
+        echo "removing empty directories"
+        find ${depsDir} -type d -empty -delete
 
         runHook postBuild
       '';
@@ -83,7 +79,7 @@ let
 
         tar --owner=0 --group=0 --numeric-owner --format=gnu \
           --sort=name --mtime="@$SOURCE_DATE_EPOCH" \
-          -c ${depsDir} | zstd --fast=3 -o $out
+          -I 'zstd -c --fast=3 -' -c ${depsDir} -f $out
 
         runHook postInstall
       '';
