@@ -95,10 +95,6 @@ To use this as a flake input you can use something along the lines of
           cp target/scala-*/*-assembly-*.jar $out
         '';
       };
-      devShell.x86_64-linux = pkgs.mkShell
-        {
-          buildInputs = [ pkgs.openjdk11 pkgs.sbt ];
-        };
     };
 }
 ```
