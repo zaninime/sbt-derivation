@@ -58,6 +58,47 @@ pkgs.sbt.mkDerivation {
 }
 ```
 
+To use this as a flake input you can use something along the lines of
+
+```nix
+{
+  description = "My Package";
+
+  inputs.sbt-derivation = {
+    type = "github";
+    owner = "zaninime";
+    repo = "sbt-derivation";
+  };
+
+  outputs = { self, nixpkgs, sbt-derivation }:
+    let
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ sbt-derivation.overlay ];
+      };
+    in
+    {
+      defaultPackage.x86_64-linux = self.packages.x86_64-linux.my-package;
+      packages.x86_64-linux.my-package = pkgs.sbt.mkDerivation {
+        pname = "my-package";
+        version = "1.0.0";
+
+        depsSha256 = "0000000000000000000000000000000000000000000000000000";
+
+        src = ./.;
+
+        buildPhase = ''
+          sbt assembly
+        '';
+
+        installPhase = ''
+          cp target/scala-*/*-assembly-*.jar $out
+        '';
+      };
+    };
+}
+```
+
 ⚠️ **Remember to update to the latest revision available!** The examples are not always kept up to date with the most recent development.
 
 ## Common problems
