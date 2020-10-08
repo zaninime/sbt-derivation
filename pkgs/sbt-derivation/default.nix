@@ -13,6 +13,9 @@
 # every time the version is changed, the dependencies will be re-downloaded
 , versionInDepsName ? false
 
+  # command to run to let sbt fetch all the required dependencies for the build.
+, depsWarmupCommand ? "sbt compile"
+
 , ... }@args':
 
 with builtins;
@@ -52,8 +55,10 @@ let
       buildPhase = args.depsBuildPhase or ''
         runHook preBuild
 
-        echo "running \"sbt compile\" to warm up the caches"
-        sbt compile
+        echo running \"${
+          escapeShellArg depsWarmupCommand
+        }\" to warm up the caches
+        ${depsWarmupCommand}
 
         echo "stripping out comments containing dates"
         find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
