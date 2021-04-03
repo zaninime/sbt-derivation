@@ -1,4 +1,4 @@
-{ lib, stdenv, callPackage, sbt, gnused, zstd, strip-nondeterminism, file }:
+{ lib, stdenv, callPackage, sbt, gnused, zstd, strip-nondeterminism, file, findutils }:
 
 { name ? "${args'.pname}-${args'.version}", src, nativeBuildInputs ? [ ]
 , passthru ? { }, patches ? [ ]
@@ -42,7 +42,7 @@ let
       name = "${if versionInDepsName then name else args'.pname}-deps.tar.zst";
       inherit src patches;
 
-      nativeBuildInputs = [ customSbt gnused zstd strip-nondeterminism file ]
+      nativeBuildInputs = [ customSbt gnused zstd strip-nondeterminism file findutils ]
         ++ (stripOutSbt nativeBuildInputs);
 
       outputHash = depsSha256;
@@ -64,11 +64,11 @@ let
         find ${depsDir} -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
 
         echo "removing non-reproducible accessory files"
-        find ${depsDir} -name '*.lock' -type f -print0 | xargs -0 rm -rfv
-        find ${depsDir} -name '*.log' -type f -print0 | xargs -0 rm -rfv
+        find ${depsDir} -name '*.lock' -type f -print0 | xargs -r0 rm -rfv
+        find ${depsDir} -name '*.log' -type f -print0 | xargs -r0 rm -rfv
 
         echo "fixing-up the compiler bridge"
-        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -0 strip-nondeterminism
+        find ${depsDir} -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -r0 strip-nondeterminism
 
         echo "removing runtime jar"
         find ${depsDir} -name rt.jar -delete
