@@ -41,7 +41,7 @@
     COURSIER_CACHE = "project/.coursier";
   };
 
-  dependencies = (callPackage ./dependencies.nix {}) {
+  dependencies = (callPackage ./dependencies.nix { inherit sbt; }) {
     inherit src patches nativeBuildInputs sbtEnv;
 
     namePrefix = "${pname}-sbt-dependencies";
