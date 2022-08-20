@@ -235,3 +235,6 @@ the build again.
 2. At the moment, when building the dependencies, a full `sbt compile` is being
 run, as it's the only command that safely download everything needed for a
 build. For bigger projects this is slow.
+    - Two workarounds ([1](https://github.com/zaninime/sbt-derivation/issues/8#issuecomment-1128022172), [2](https://github.com/zaninime/sbt-derivation/issues/8#issuecomment-1200327608)) are mentioned in GitHub issues
+    - For some projects in Scala 3, `sbt 'managedClasspath; compilers'` produce the same output as `sbt compile`
+    - Feel free to experiment with different `depsWarmupCommand`s and please report your findings!

@@ -18,7 +18,6 @@
   depsSha256,
   #
   # Command to run to let sbt fetch all the required dependencies for the build.
-  # depsWarmupCommand ? "sbt 'managedClasspath; compilers'",
   depsWarmupCommand ? "sbt compile",
   #
   # Strategy to use to package and unpackage the dependencies
