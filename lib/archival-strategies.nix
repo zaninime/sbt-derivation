@@ -9,7 +9,7 @@
     fileExtension = "";
     packerFragment = ''
       mkdir -p $out
-      cp -ar project/{.sbtboot,.boot,.ivy,.coursier} $out
+      cp -ar $SBT_DEPS/project/. $out
     '';
   };
 in {
@@ -20,7 +20,7 @@ in {
     packerFragment = ''
       tar --owner=0 --group=0 --numeric-owner --format=gnu \
         --sort=name --mtime="@$SOURCE_DATE_EPOCH" \
-        -C project -cf "$out" .sbtboot .boot .ivy .coursier
+        -C $SBT_DEPS/project -cf $out .
     '';
     extractorFragment = deps: ''
       tar -C "$target/project" -xpf ${deps}
@@ -34,7 +34,7 @@ in {
       tar --owner=0 --group=0 --numeric-owner --format=gnu \
         --sort=name --mtime="@$SOURCE_DATE_EPOCH" \
         -I 'zstd -c --fast=3 -' \
-        -C project -cf "$out" .sbtboot .boot .ivy .coursier
+        -C $SBT_DEPS/project -cf $out .
     '';
     extractorFragment = deps: ''
       tar -I zstd -C "$target/project" -xpf ${deps}
@@ -53,7 +53,6 @@ in {
     // {
       nativeBuildInputs = [stow];
       extractorFragment = deps: ''
-        mkdir -p "$target/project"
         stow -t "$target/project" -d ${builtins.dirOf deps} --no-folding ${builtins.baseNameOf deps}
       '';
     };

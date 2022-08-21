@@ -219,7 +219,7 @@ If you're not ready to migrate, the previous version is kept in a branch called 
 
 ### Changed behaviour
 - `postConfigure` will now run after extracting the dependencies (was running before). The whole configure phase is used to extract the dependencies.
-- The dependencies are no longer stored in a `.nix` directory, but rather in the default locations provided by sbt in `--no-share` mode.
+- The dependencies are no longer stored in a `.nix` directory, but rather in a temporary global directory mirroring the structure used by sbt in `--no-share` mode.
 - `overrideDepsAttrs` now takes two parameters, `final` and `prev`, instead of just `prev`.
 
 ### New options

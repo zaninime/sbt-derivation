@@ -13,7 +13,7 @@
   writeShellScript,
 }: {
   namePrefix,
-  sbtEnv,
+  sbtEnvSetupCmds,
   src,
   patches ? [],
   sha256,
@@ -25,8 +25,7 @@
 } @ args: let
   archivalStrategy = (callPackage ./archival-strategies.nix {}).${args.archivalStrategy};
 
-  mkAttrs = drv: (sbtEnv
-    // {
+  mkAttrs = drv: ({
       inherit src patches;
 
       name = namePrefix + archivalStrategy.fileExtension;
@@ -49,6 +48,8 @@
       buildPhase = ''
         runHook preBuild
 
+        ${sbtEnvSetupCmds}
+
         echo "running:"
         ${let
           matches = builtins.match ''
@@ -63,21 +64,21 @@
         ${warmupCommand}
 
         echo "stripping out comments containing dates"
-        find project -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
+        find $SBT_DEPS/project -name '*.properties' -type f -exec sed -i '/^#/d' {} \;
 
         echo "removing non-reproducible accessory files"
-        find project -name '*.lock' -type f -print0 | xargs -r0 rm -rfv
-        find project -name '*.log' -type f -print0 | xargs -r0 rm -rfv
+        find $SBT_DEPS/project -name '*.lock' -type f -print0 | xargs -r0 rm -rfv
+        find $SBT_DEPS/project -name '*.log' -type f -print0 | xargs -r0 rm -rfv
 
         echo "fixing-up the compiler bridge and interface"
-        find project -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -r0 strip-nondeterminism
-        find project -name 'org.scala-sbt-compiler-interface_*' -type f -print0 | xargs -r0 strip-nondeterminism
+        find $SBT_DEPS/project -name 'org.scala-sbt-compiler-bridge_*' -type f -print0 | xargs -r0 strip-nondeterminism
+        find $SBT_DEPS/project -name 'org.scala-sbt-compiler-interface_*' -type f -print0 | xargs -r0 strip-nondeterminism
 
         echo "removing runtime jar"
-        find project -name rt.jar -delete
+        find $SBT_DEPS/project -name rt.jar -delete
 
         echo "removing empty directories"
-        find project -type d -empty -delete
+        find $SBT_DEPS/project -type d -empty -delete
 
         runHook postBuild
       '';
@@ -85,10 +86,9 @@
       installPhase = ''
         runHook preInstall
 
-        mkdir -p project/{.sbtboot,.boot,.ivy,.coursier}
         ${lib.optionalString optimize ''
-          ${rdfind}/bin/rdfind -makesymlinks true -outputname /dev/null project/{.coursier,.ivy,.boot,.sbtboot}
-          ${symlinks}/bin/symlinks -rc project
+          ${rdfind}/bin/rdfind -makesymlinks true -outputname /dev/null $SBT_DEPS/project/{.sbtboot,.boot,.ivy,.coursier}
+          ${symlinks}/bin/symlinks -rc $SBT_DEPS/project
         ''}
         ${archivalStrategy.packerFragment}
 
@@ -108,6 +108,7 @@
         target="$1"
 
         echo "extracting dependencies in $target"
+        mkdir -p "$target/project"
 
         start="$(date +%s.%N)"
         ${archivalStrategy.extractorFragment drv}
