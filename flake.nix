@@ -11,13 +11,13 @@
   }:
     {
       overlays.default = import ./overlay.nix;
-      lib.mkSbtDerivation = import ./lib/flat-sbt-derivation.nix;
+      lib.mkSbtDerivation = import ./lib/uncurried-bootstrap.nix;
     }
     // (flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages."${system}";
       testDependencies = with pkgs; [gnused gron nix-prefetch];
     in {
-      mkSbtDerivation = pkgs.callPackage ./lib/sbt-derivation.nix {};
+      mkSbtDerivation = import ./lib/bootstrap.nix pkgs;
 
       devShells.default = pkgs.mkShell {
         buildInputs = testDependencies;

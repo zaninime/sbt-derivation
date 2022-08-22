@@ -18,8 +18,10 @@
     else if pkgs.lib.hasSuffix ".nix" path
     then import path
     else throw "Unsupported file type";
+
+  overrides = import "${projectDir}/overrides.nix";
 in
-  pkgs.mkSbtDerivation ({
+  pkgs.mkSbtDerivation.withOverrides overrides ({
       pname = "test-project";
       version = "unstable";
       src = projectDir;

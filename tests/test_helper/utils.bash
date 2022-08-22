@@ -48,6 +48,8 @@ generate_project() {
 			@main def hello() = println("Hello, world")
 		EOF
 	fi
+
+	echo "{}" > "$target_dir/overrides.nix"
 }
 
 write_nix_config() {

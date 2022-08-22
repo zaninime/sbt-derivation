@@ -1,5 +1,5 @@
 final: prev: {
-  mkSbtDerivation = prev.callPackage ./lib/sbt-derivation.nix {};
+  mkSbtDerivation = import ./lib/bootstrap.nix final;
 
   sbt = prev.sbt.overrideAttrs (old: {
     passthru =
