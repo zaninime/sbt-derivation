@@ -97,3 +97,19 @@ setup() {
 	assert_success
 	assert_output --partial 'type = "derivation";'
 }
+
+@test "usage through default.nix should not throw errors" {
+	run nix-instantiate --eval -E - <<- EOF
+	(import "$tests_dir/..") {
+		pkgs = import <nixpkgs> {};
+
+		pname = "";
+		version = "";
+		src = ./.;
+		depsSha256 = "";
+	}
+	EOF
+
+	assert_success
+	assert_output --partial 'type = "derivation";'
+}

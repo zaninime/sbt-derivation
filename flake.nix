@@ -11,7 +11,7 @@
   }:
     {
       overlays.default = import ./overlay.nix;
-      lib.mkSbtDerivation = import ./lib/uncurried-bootstrap.nix;
+      lib.mkSbtDerivation = import ./default.nix;
     }
     // (flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages."${system}";
