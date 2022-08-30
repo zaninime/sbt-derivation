@@ -34,15 +34,20 @@
   drvAttrs =
     removeAttrs args ["overrideDepsAttrs" "depsSha256" "depsWarmupCommand" "depsPackingStrategy" "depsOptimize"];
 
-  depsDir = ".nix";
-
-  sbtEnv = {
-    SBT_OPTS = (args.SBT_OPTS or "") + " --no-share";
-    COURSIER_CACHE = "project/.coursier";
-  };
+  # create a random temporary directory and configure sbt using environment
+  # variables to use directories within it as a cache dir. we use the "project"
+  # subdirectory so that all the dependencies can be extracted to the directory
+  # with build.sbt and sbt will use them in --no-share mode, if the user finds
+  # this convenient for testing.
+  sbtEnvSetupCmds = ''
+    export SBT_DEPS=$(mktemp -d)
+    export SBT_OPTS="-Dsbt.global.base=$SBT_DEPS/project/.sbtboot -Dsbt.boot.directory=$SBT_DEPS/project/.boot -Dsbt.ivy.home=$SBT_DEPS/project/.ivy $SBT_OPTS"
+    export COURSIER_CACHE=$SBT_DEPS/project/.coursier
+    mkdir -p $SBT_DEPS/project/{.sbtboot,.boot,.ivy,.coursier}
+  '';
 
   dependencies = (callPackage ./dependencies.nix {}) {
-    inherit src patches nativeBuildInputs sbtEnv;
+    inherit src patches nativeBuildInputs sbtEnvSetupCmds;
 
     namePrefix = "${pname}-sbt-dependencies";
     sha256 = depsSha256;
@@ -52,8 +57,7 @@
     overrideAttrs = overrideDepsAttrs;
   };
 in
-  stdenv.mkDerivation (sbtEnv
-    // drvAttrs
+  stdenv.mkDerivation (drvAttrs
     // {
       nativeBuildInputs = [sbt] ++ nativeBuildInputs;
 
@@ -62,7 +66,8 @@ in
       configurePhase = ''
         runHook preConfigure
 
-        ${dependencies.extractor} .
+        ${sbtEnvSetupCmds}
+        ${dependencies.extractor} $SBT_DEPS
 
         runHook postConfigure
       '';
