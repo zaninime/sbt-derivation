@@ -61,7 +61,11 @@ in
     // {
       nativeBuildInputs = [sbt] ++ nativeBuildInputs;
 
-      passthru.dependencies = dependencies;
+      passthru =
+        passthru
+        // {
+          inherit dependencies;
+        };
 
       configurePhase = ''
         runHook preConfigure

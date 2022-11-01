@@ -113,3 +113,19 @@ setup() {
 	assert_success
 	assert_output --partial 'type = "derivation";'
 }
+
+@test "correctly sets passthru" {
+	run nix-instantiate --eval -E - <<- EOF
+	((builtins.getFlake "$tests_dir/..").outputs.lib.mkSbtDerivation {
+		pkgs = import <nixpkgs> {};
+		pname = "";
+		version = "";
+		src = ./.;
+		depsSha256 = "";
+		passthru.foo = "bar";
+	}).passthru
+	EOF
+
+	assert_success
+	assert_output --partial 'foo = "bar"'
+}
