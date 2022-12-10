@@ -155,6 +155,16 @@ mkSbtDerivation {
   #  repeat the procedure above every time.
   depsSha256 = "";
 
+  # build your software with sbt, consider running unit tests too!
+  buildPhase = ''
+    sbt compile
+  '';
+
+  # install your software in $out, depending on your needs
+  installPhase = ''
+    cp target/my-app.jar $out
+  '';
+
 
   ### OPTIONAL
 
