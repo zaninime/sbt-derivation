@@ -12,6 +12,11 @@
     {
       overlays.default = import ./overlay.nix;
       lib.mkSbtDerivation = import ./default.nix;
+
+      templates.cli-app = {
+        path = ./templates/full;
+        description = "Nix flake template for Scala projects";
+      };
     }
     // (flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages."${system}";
