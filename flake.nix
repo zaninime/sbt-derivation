@@ -14,7 +14,7 @@
       lib.mkSbtDerivation = import ./default.nix;
 
       templates.cli-app = {
-        path = ./templates/full;
+        path = ./templates/cli-app;
         description = "Nix flake template for Scala projects";
       };
     }

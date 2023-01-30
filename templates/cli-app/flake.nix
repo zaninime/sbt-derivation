@@ -1,5 +1,5 @@
 {
-  description = "Nix flake template";
+  description = "Nix flake template for Scala projects";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
