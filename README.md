@@ -53,7 +53,7 @@ There are three ways of installing this library in your project.
     inputs.nixpkgs.url = "github:NixOS/nixpkgs";
 
     # add this line
-    inputs.sbt.url = "github:zaninime/sbt-derivation/master";
+    inputs.sbt.url = "github:zaninime/sbt-derivation";
     # recommended for first style of usage documented below, but not necessary
     inputs.sbt.inputs.nixpkgs.follows = "nixpkgs";
 
